@@ -8,7 +8,9 @@ knit: (function(input_file, encoding) {
 title: "Demo"
 author: "Hamda Binte Ajmal"
 date: "6 June 2020"
-output: rmarkdown::github_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
