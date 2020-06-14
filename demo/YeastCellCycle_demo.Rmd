@@ -1,3 +1,9 @@
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+ 
 ---
 title: "Demo"
 author: "Hamda Binte Ajmal"
@@ -7,11 +13,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
 library(DBN4GRN)
 ```
 
-## R Markdown
-This document contains a demonstration to reverse engineer gene regulatory networks using DBN learning with BIC, $Score_{LOPC}$ and $Score_{LASSO}$ from Spellmans Yeast Cell Cycle data (Spellman et al. (1998) Mol Biol Cell. 1998 Dec; 9(12): 3273–3297. (\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC25624/})
+## Learning sparse DBN structures from Yeast Cell Cycle gene expression data.
+This document contains a demonstration to reverse engineer gene regulatory networks using DBN learning with BIC, $Score_{LOPC}$ and $Score_{LASSO}$ from Spellman's Yeast Cell Cycle data (Spellman et al. (1998) Mol Biol Cell. 1998 Dec; 9(12): 3273–3297. (\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC25624/})
 The name of our R package is 'DBN4GRN'. For further details of algorithms and methods, please see our paper "Dynamic Bayesian network learning to infer sparsemodels from time series data", which is currently submitted to the \textit{Bioinformatics} journal for review, or email us at \href{h.ajmal1@nuigalway.ie} or \href{michael.madden@nuigalway.ie}.
 
 The first step is to load the Spellmans Yeast Cell Cycle data, that is provided in the package. 
@@ -27,7 +34,7 @@ yeast_data_imputed <- ImputeData(yeast_data)
 
 Now, using the data frame of validated arcs downloaded from YEASTRACT, we filter a list of all the possible regulator genes documented in YEASTRACT and their column indices in the data frame.
 
-```{r possible_parents}
+```{r possible_parents, message = FALSE ,warning = FALSE, results= 'hide' }
 data("yeasts_arcs_validated")
 potential_parents <- c("ACE2","ASH1","CHA4","FKH1","FKH2","GAT3","GCR1","HCM1","KAR4","MBP1", "MCM1","MET28","MIG2","NDD1","PHD1","PLM2","RAP1","RDS2","RME1","RPI1","SRD1","STB5","STP2","STP4","SUT1","SWI4","SWI5","SWI6","TBF1","TEC1","TOS4","WTM1","WTM2","YHP1","YOX1")
 
@@ -35,19 +42,24 @@ pred_pos_35 <- which(names(yeast_data) %in% potential_parents)
 
 ```
 To learn a structure of a DBN using the BIC score, we use the following code.
-```{r BIC}
-GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = NULL, maxP = Inf, gamma = 0.0,score = "Score_BIC", pred_pos = pred_pos_35)
+```{r BIC, message = FALSE ,warning = FALSE , results='hide'}
+GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = NULL, maxP = Inf, gamma = 0.0,score = "BIC", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
 Score_BIC_arcs <- MakeArcSet(GS_Score_BIC, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_BIC_arcs, yeasts_arcs_validated)
-#    number percentage 
-# 1566.00000   19.17708 
+xlsx::write.xlsx(Score_BIC_arcs, file = "GreedySearch_BIC.xlsx", col.names = TRUE, row.names = FALSE)
 
 
 ```
+
+```{r print, message=TRUE }
+print(paste0("Percentage of validated arcs = ", results[2]))
+print(paste0("Total number of arcs = ", nrow(Score_BIC_arcs) ))
+```
+
 To learn a DBN from yeast data using $Score_{LOPC}$ with $\gamma = 0.0$, we use the following code.
-```{r g1dbn_0p0}
+```{r g1dbn_0p0, message = FALSE ,warning = FALSE , results= 'hide' }
 LOPC  = ExecuteG1DBNS1(yeast_data_imputed, predPosition = pred_pos_35)
 GS_Score_LOPC_0p0 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LOPC$S1ls, maxP = Inf, gamma = 0.0,score = "Score_LOPC", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
@@ -55,38 +67,64 @@ Score_LOPC_0p0_arcs <- MakeArcSet(GS_Score_LOPC_0p0, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LOPC_0p0_arcs, yeasts_arcs_validated)
 
+```
 
+```{r res2 }
+print(paste0("Percentage of validated arcs = ", results[2]))
+print(paste0("Total number of arcs = ", nrow(Score_LOPC_0p0_arcs) ))
+xlsx::write.xlsx(Score_BIC_arcs, file = "GreedySearch_LOPC.xlsx", col.names = TRUE, row.names = FALSE)
 
 ```
+
 To learn a DBN from yeast data using $Score_{LOPC}$ with $\gamma = 0.2$, we use the following code.
-```{r g1dbn_0p2}
+```{r g1dbn_0p2 , message = FALSE ,warning = FALSE, results= 'hide' }
 #LOPC  = ExecuteG1DBNS1(yeast_data_imputed)
 GS_Score_LOPC_0p2 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LOPC$S1ls, maxP = Inf, gamma = 0.2,score = "Score_LOPC", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
 Score_LOPC_0p2_arcs <- MakeArcSet(GS_Score_LOPC_0p2, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LOPC_0p2_arcs, yeasts_arcs_validated)
+xlsx::write.xlsx(Score_LOPC_0p2_arcs, file = "GreedySearch_LOPC_0p2.xlsx", col.names = TRUE, row.names = FALSE)
+
+```
+
+```{r res3}
+print(paste0("Percentage of validated arcs = ", results[2]))
+print(paste0("Total number of arcs = ", nrow(Score_LOPC_0p2_arcs) ))
 
 
 ```
 To learn a DBN from yeast data using $Score_{LASSO}$ with $\gamma = 0.0$, we use the following code.
-```{r lasso_0p0}
+```{r lasso_0p0 , message = FALSE ,warning = FALSE, results= 'hide' }
 LASSO  = ApplyLasso(yeast_data_imputed, pred_pos = pred_pos_35)
 GS_Score_LASSO_0p0 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LASSO, maxP = Inf, gamma = 0.0,score = "Score_LASSO", pred_pos = pred_pos_35)
 Score_LASSO_0p0_arcs <- MakeArcSet(GS_Score_LASSO_0p0, yeast_data_imputed)
 results <- PercentageValidatedFromRecovered(Score_LASSO_0p0_arcs, yeasts_arcs_validated)
-print(results)
+xlsx::write.xlsx(Score_LASSO_0p0_arcs, file = "GreedySearch_LASSO.xlsx", col.names = TRUE, row.names = FALSE)
 
 ```
 
+```{r res4}
+print(paste0("Percentage of validated arcs = ", results[2]))
+print(paste0("Total number of arcs = ", nrow(Score_LASSO_0p0_arcs) ))
+
+
+```
 To learn a DBN from yeast data using $Score_{LASSO}$ with $\gamma = 0.2$, we use the following code.
-```{r lasso_0p2}
+```{r lasso_0p2 , message = FALSE ,warning = FALSE, results= 'hide' }
 #LASSO  = ApplyLasso(yeast_data_imputed, pred_pos = pred_pos_35)
 GS_Score_LASSO_0p2 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LASSO, maxP = Inf, gamma = 0.2,score = "Score_LASSO", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
 Score_LASSO_0p2_arcs <- MakeArcSet(GS_Score_LASSO_0p2, yeast_data_imputed)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LASSO_0p2_arcs, yeasts_arcs_validated)
-print(results)
+xlsx::write.xlsx(Score_LASSO_0p2_arcs, file = "GreedySearch_LASSO_0p2.xlsx", col.names = TRUE, row.names = FALSE)
+
+
+```
+
+```{r res5}
+print(paste0("Percentage of validated arcs = ", results[2]))
+print(paste0("Total number of arcs = ", nrow(Score_LASSO_0p2_arcs) ))
 
 ```
