@@ -13,9 +13,9 @@
 # If using on a multicore system, please change the mc.cores and apply function to mcapply and import
 # package "parallel"
 
-
+library(DBN4GRN)
 ## DATA GENERATION ##
-sim_num <- 100 #Change this number to the desired number of simulations
+sim_num <- 1 #Change this number to the desired number of simulations
 seeds <- 1:sim_num
 datasets <- lapply(seeds, function(x) SimulateData(genes = 50, timepoints = 20, seed = x, prop = 0.05))
 
@@ -27,10 +27,24 @@ results = CalculatePrecisionAndRecallForMultiple(BNs_BIC, datasets)
 print(results)
 
 
+##  EXHAUSTIVE SEARCH with maximum number of parents set to 3. Score = Score_LOPC, gamma = 0.3
+LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+BNs_Score_LOPC_0p3 <- mapply(function(dataset, lopc) ExhaustiveSearchForBestParents(data = dataset$data, type = "Score_LOPC", gamma = 0.3, score_mat = lopc$S1ls), datasets, LOPCs, SIMPLIFY = FALSE)
+results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_0p3, datasets)
+print(results)
+
+
 ##  EXHAUSTIVE SEARCH with maximum number of parents set to 3. Score = Score_LOPC, gamma = 0.4
 LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
-BNs_Score_LOPC <- mapply(function(dataset, lopc) ExhaustiveSearchForBestParents(data = dataset$data, type = "Score_LOPC", gamma = 0.4, score_mat = lopc$S1ls), datasets, LOPCs, SIMPLIFY = FALSE)
-results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC, datasets)
+BNs_Score_LOPC_0p4 <- mapply(function(dataset, lopc) ExhaustiveSearchForBestParents(data = dataset$data, type = "Score_LOPC", gamma = 0.4, score_mat = lopc$S1ls), datasets, LOPCs, SIMPLIFY = FALSE)
+results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_0p4, datasets)
+print(results)
+
+
+##  EXHAUSTIVE SEARCH with maximum number of parents set to 3. Score = Score_LOPC, gamma = 0.6
+LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+BNs_Score_LOPC_0p6 <- mapply(function(dataset, lopc) ExhaustiveSearchForBestParents(data = dataset$data, type = "Score_LOPC", gamma = 0.6, score_mat = lopc$S1ls), datasets, LOPCs, SIMPLIFY = FALSE)
+results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_0p6, datasets)
 print(results)
 
 ###  EXHAUSTIVE SEARCH with maximum number of parents set to 3. Score = Score_LASSO, gamma = 0.2
@@ -57,24 +71,35 @@ BNs_Score_LASSO_0p5 <- mapply(function(dataset, lasso) ExhaustiveSearchForBestPa
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LASSO_0p5, datasets)
 print(results)
 
-
-### Greedy hill-climbing search, max number of parents set to 3. Score = BIC
-BNs_BIC_greedy <- lapply(datasets, function(dataset) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_BIC", maxP = 3 , gamma = 0.6))
+### Greedy hill-climbing search, max number of parents set to Inf. Score = BIC
+BNs_BIC_greedy <- lapply(datasets, function(dataset) GreedySearchParentsWithPriors(data = dataset$data, score = "BIC", maxP = Inf , gamma = 0.6))
 results = CalculatePrecisionAndRecallForMultiple(BNs_BIC_greedy, datasets)
 print(results)
 
 
-### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LOPC, gamma = 0.6
-LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+### Greedy hill-climbing search, max number of parents set to 3. Score = BIC
+BNs_BIC_greedy_3 <- lapply(datasets, function(dataset) GreedySearchParentsWithPriors(data = dataset$data, score = "BIC", maxP = 3 , gamma = 0.6))
+results = CalculatePrecisionAndRecallForMultiple(BNs_BIC_greedy_3, datasets)
+print(results)
 
-BNs_Score_LOPC_greedy <- mapply(function(dataset, lopc) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LOPC", maxP = 3, gamma = 0.6, score_mat = lopc$S1ls ), datasets, LOPCs, SIMPLIFY = FALSE)
+
+### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LOPC, gamma = 0.6
+#LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+
+BNs_Score_LOPC_greedy_3 <- mapply(function(dataset, lopc) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LOPC", maxP = 3, gamma = 0.6, score_mat = lopc$S1ls ), datasets, LOPCs, SIMPLIFY = FALSE)
+results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_greedy_3, datasets)
+print(results)
+### Greedy hill-climbing search, max number of parents set to Inf. Score = Score_LOPC, gamma = 0.6
+#LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+
+BNs_Score_LOPC_greedy <- mapply(function(dataset, lopc) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LOPC", maxP = Inf, gamma = 0.6, score_mat = lopc$S1ls ), datasets, LOPCs, SIMPLIFY = FALSE)
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_greedy, datasets)
 print(results)
 
 
 ### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LASSO, gamma = 0.6
-BNs_Score_LASSO_greedy <- mapply(function(dataset, lasso) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LASSO", maxP = 3, gamma = 0.6, score_mat = lasso ), datasets, LASSOs, SIMPLIFY = FALSE)
-results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LASSO_greedy, datasets)
+BNs_Score_LASSO_greedy_3 <- mapply(function(dataset, lasso) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LASSO", maxP = 3, gamma = 0.6, score_mat = lasso ), datasets, LASSOs, SIMPLIFY = FALSE)
+results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LASSO_greedy_3, datasets)
 print(results)
 
 

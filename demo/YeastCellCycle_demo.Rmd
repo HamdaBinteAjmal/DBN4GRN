@@ -8,9 +8,8 @@ knit: (function(input_file, encoding) {
 title: "Demo"
 author: "Hamda Binte Ajmal"
 date: "6 June 2020"
-output: 
-  html_document:
-    keep_md: true
+output:  md_document
+variant: markdown_github
 ---
 
 ```{r setup, include=FALSE}
