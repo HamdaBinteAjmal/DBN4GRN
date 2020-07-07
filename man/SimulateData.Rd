@@ -4,8 +4,8 @@
 \alias{SimulateData}
 \title{Simulate Data
 This function first generates a random network and then simulates the multi variate time series data according to the following  first order Auto-Regressive process,
-X(t) = AX(t-1) + B + E(t),
-where E(t) follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
+\eqn{X(t) = AX(t-1) + B + E(t)},
+where \eqn{E(t)} follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
 It uses different functions from the G1DBN package.}
 \usage{
 SimulateData(
@@ -18,7 +18,7 @@ SimulateData(
 )
 }
 \arguments{
-\item{genes}{Number of genes/variables}
+\item{genes}{Number of genes or variables}
 
 \item{timepoints}{Number of samples}
 
@@ -36,10 +36,11 @@ A list comprising of dataset generated (data) and the network (RealNet) from whi
 \description{
 Simulate Data
 This function first generates a random network and then simulates the multi variate time series data according to the following  first order Auto-Regressive process,
-X(t) = AX(t-1) + B + E(t),
-where E(t) follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
+\eqn{X(t) = AX(t-1) + B + E(t)},
+where \eqn{E(t)} follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
 It uses different functions from the G1DBN package.
 }
 \examples{
-SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
+sim <- SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.25)
+head(sim$data)
 }

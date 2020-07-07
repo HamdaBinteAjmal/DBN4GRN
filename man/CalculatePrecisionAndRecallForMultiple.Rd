@@ -10,7 +10,7 @@ CalculatePrecisionAndRecallForMultiple(DBNList, datasets)
 \arguments{
 \item{DBNList}{a list of learned DBN structures}
 
-\item{datasets}{a list of datasets simulated using the SimulateData() function. It holds the true DBN network structure (Adjaceny matrix)}
+\item{datasets}{a list of datasets simulated using the \code{SimulateData()} function. It holds the true DBN network structure (Adjaceny matrix)}
 }
 \value{
 a list of different parameters:"precision_mean","precision_sd","recall_mean", "recall_sd",

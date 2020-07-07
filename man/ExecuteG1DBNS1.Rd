@@ -9,15 +9,11 @@ ExecuteG1DBNS1(data, predPosition = NULL)
 \arguments{
 \item{data}{data.frame or a matrix with n rows (=time points) and p columns (=genes) containing the gene expression time series.}
 
-\item{predPosition}{To be specified to reduce the set of possible predictor genes to a subset of d<p genes: an array included in [1,p] defining the position of the d predictor genes in the data matrix (n * p), default=NULL.}
+\item{predPosition}{To be specified to reduce the set of possible predictor genes to a subset of \eqn{d<p} genes: an array included in \code{[1,p]} defining the position of the d predictor genes in the data matrix (n * p), default=NULL.}
 }
 \value{
 A matrix of first order conditional independence scores for each edge in the network
 }
 \description{
 This function calculates the first order conditional independence score using the G1DBN package
-}
-\examples{
-score_mat <- ExecuteG1DBNS1(yeast_data)
-score_mat <- ExecuteG1DBNS1(yeast_data, pred_pos_35)
 }

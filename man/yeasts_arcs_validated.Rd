@@ -9,9 +9,6 @@ Each row represents a regulatory relationship validated by experimentation and c
 \format{
 An object of class data.frame. First column represents the regulator genes and the second column represents the target genes
 }
-\source{
-\href{http://www.yeastract.com/index.php}
-}
 \usage{
 data(yeasts_arcs_validated)
 }
@@ -25,6 +22,5 @@ data(yeasts_arcs_validated)
 }
 \references{
 Monteiro et al. (2020)  Nucleic Acids Research, 48(D1):D642-D649
-(\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC25624/})
 }
 \keyword{datasets}

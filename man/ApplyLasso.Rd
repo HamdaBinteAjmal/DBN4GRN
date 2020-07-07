@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{ApplyLasso}
 \alias{ApplyLasso}
-\title{This function applies L1-regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
+\title{This function applies L1 regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
 It uses function from package "lars".}
 \usage{
 ApplyLasso(data, pred_pos = NULL)
@@ -16,6 +16,6 @@ ApplyLasso(data, pred_pos = NULL)
 a matrix of Lasso regression coefficients.
 }
 \description{
-This function applies L1-regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
+This function applies L1 regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
 It uses function from package "lars".
 }

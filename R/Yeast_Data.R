@@ -17,9 +17,7 @@
 #' @keywords datasets
 #'
 #' @references Spellman et al. (1998) Mol Biol Cell. 1998 Dec; 9(12): 3273–3297.
-#' (\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC25624/})
 #' @references Lèbre et al. (2009) Statistical Applications in Genetics and Molecular Biology,8.
-#' @source \href{http://icube-bfo.unistra.fr/fr/index.php/G1DBN_supplementary_material}
 #'
 #' @examples
 #' data(yeast_data)

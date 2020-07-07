@@ -1,10 +1,10 @@
 #' This function calculates the first order conditional independence score using the G1DBN package
 #' @param data data.frame or a matrix with n rows (=time points) and p columns (=genes) containing the gene expression time series.
-#' @param predPosition To be specified to reduce the set of possible predictor genes to a subset of d<p genes: an array included in [1,p] defining the position of the d predictor genes in the data matrix (n * p), default=NULL.
+#' @param predPosition To be specified to reduce the set of possible predictor genes to a subset of \eqn{d<p} genes: an array included in \code{[1,p]} defining the position of the d predictor genes in the data matrix (n * p), default=NULL.
 #' @return A matrix of first order conditional independence scores for each edge in the network
-#' @examples
-#' score_mat <- ExecuteG1DBNS1(yeast_data)
-#' score_mat <- ExecuteG1DBNS1(yeast_data, pred_pos_35)
+#' @example
+#' sim <- SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.25)
+#' score_mat <- ExecuteG1DBNS1(sim$data)
 #' @export
 ExecuteG1DBNS1 <- function(data, predPosition = NULL)
 {
@@ -14,10 +14,10 @@ ExecuteG1DBNS1 <- function(data, predPosition = NULL)
 
 #' Simulate Data
 #' This function first generates a random network and then simulates the multi variate time series data according to the following  first order Auto-Regressive process,
-#' X(t) = AX(t-1) + B + E(t),
-#' where E(t) follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
+#' \eqn{X(t) = AX(t-1) + B + E(t)},
+#' where \eqn{E(t)} follows a zero-centered multivariate gaussian distribution whose variance matrix S is diagonal.
 #' It uses different functions from the G1DBN package.
-#' @param genes Number of genes/variables
+#' @param genes Number of genes or variables
 #' @param  timepoints Number of samples
 #' @param seed Random seed,  is a number used to initialize a pseudorandom number generator.
 #' @param prop The proportion of edges in the entire network
@@ -25,7 +25,8 @@ ExecuteG1DBNS1 <- function(data, predPosition = NULL)
 #' @param errors vector of 2 elements specifying min and max value of the uniform distribution from which the error variances are drawn
 #' @return A list comprising of dataset generated (data) and the network (RealNet) from which the data is generated.
 #' @examples
-#' SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
+#' sim <- SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.25)
+#' head(sim$data)
 #' @export
 #' @import G1DBN
 #' @import stats
@@ -79,12 +80,14 @@ ShiftData <- function(data)
 
 
 
-#' This function applies L1-regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
+#' This function applies L1 regularised Lasso regression on the dataset. The regularisation parameter is selected by cross validation.
 #' It uses function from package "lars".
 #' @param data a data.frame or a matrix with n rows (=time points) and p columns (=genes) containing the gene expression time series.
 #' @param pred_pos indices of the potential predictor variables in the dataset. If the value is NULL, all variables are considered as potential predictors.
 #' @return a matrix of Lasso regression coefficients.
-#' @example LASSO <- ApplyLasso(yeast_data, c(1,2,3,5))
+#' @example
+#' sim <- SimulateData(genes = 50, timepoints = 30, seed = 1, prop = 0.25)
+#' LASSO <- ApplyLasso(sim$data, c(1,2,3,5))
 #' @export
 
 
@@ -128,10 +131,12 @@ return(c1)
 }
 
 
-#' Normalise the data values between 0-1.
-#' @param x a vector or a matrix of unscaled values
+#' Normalise the data values between 0 and 1.
+#' @param x vector or a matrix of unscaled values
 #' @return a vector or a matrix with values normalized within 0-1 range
-#' @example lars_coeffs <- Normalisation_01(ApplyLasso(data))
+#' @example
+#' sim <- SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.25)
+#' lars_coeffs <- Normalisation_01(ApplyLasso(sim$data, c(1,2,3,4,5)))
 #' @export
 Normalisation_01<- function(x)
 {
@@ -153,8 +158,9 @@ Normalisation_01<- function(x)
 #' @export
 #' @import bnlearn
 #' @example
-#' score_mat <- ExecuteG1DBNS1(data)
-#' dbn <- GreedySearchParentsWithPriors(data, score_mat$S1ls, score = "Score_LOPC", gamma = 0.2)
+#' sim <- SimulateData(genes = 30, timepoints = 10, seed = 1, prop = 0.25)
+#' score_mat <- ExecuteG1DBNS1(sim$data)
+#' dbn <- GreedySearchParentsWithPriors(sim$data, score_mat$S1ls, score = "Score_LOPC", gamma = 0.2, maxP = 2)
 
 GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, gamma = 0, pred_pos = NULL, score = "Score_BIC")
 {
@@ -214,8 +220,8 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
 }
 #' Internal function
 #' Applied greedy hill-climbing search to each local target node in the netork
-#' E_ij = log(score_mat + gamma)
-#' ¬E_ij =  log(1-score_mat+gamma
+#' \eqn{E_ij = log(score_mat + gamma)}
+#'  \eqn{¬E_ij =  log(1-score_mat+gamma)}
 #' @return set of parents arcs for each local target node
 #' @keywords internal
 #' @import bnlearn
@@ -317,8 +323,9 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
 #' @keywords internal
 #'
 #' @example
-#' score_mat <- ExecuteG1DBNS1(data)
-#' dbn <- GreedySearchParentsWithPriors(data, score_mat$S1ls, score = "Score_LOPC", gamma = 0.2)
+#' sim <- SimulateData(genes = 20, timepoints = 10, seed = 1, prop = 0.25)
+#' score_mat <- ExecuteG1DBNS1(sim$data)
+#' dbn <- GreedySearchParentsWithPriors(sim$data, score_mat$S1ls, score = "Score_LOPC", gamma = 0.2, maxP = 2)
 #' arcs <- MarkArcSet(dbn)
 #' @export
 
@@ -349,16 +356,17 @@ MakeArcSet <- function(bn, data)
 #' @param score_mat a weight matrix to be added to the BIC score, to calculate "Score_LOPC" and "Score_LASSO"
 #' @export
 #' @example
-#' sim_data <-  SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
-#' lasso_reg = ApplyLasso(sim_data$data)
-#' dbn_score_lasso <- ExhaustiveSearchForBestParents(sim_data$data, type = "Score_LASSO", gamma = 0.0, score_mat = lasso_reg)
+#' sim_data <-  SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05 )
+#' lasso_mat = ApplyLasso(sim_data$data)
+#' dbn_score_lasso <- ExhaustiveSearchForBestParents(sim_data$data, type = "Score_LASSO",
+#' gamma = 0.0, score_mat = lasso_mat)
 #' @example
 #' sim_data <-  SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
 #' dbn_score_bic <-  ExhaustiveSearchForBestParents(sim_data$data, type = "Score_BIC")
 #' @example
-#' sim_data <-  SimulateData(genes = 50, timepoints = 20, seed = 1, prop = 0.05, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
-#' lopc <- ExecuteG1DBNS1(sim_data$data)
-#' dbn_score_lopc <- ExhaustiveSearchForBestParents(sim_data$data, type = "Score_LOPC", gamma = 0.1, score_mat = lopc$S1LS)
+#' sim <-  SimulateData(genes = 10, timepoints = 8, seed = 1, prop = 0.25, range = c(-0.95,-0.05,0.05,0.95), errors = c(0.03, 0.08) )
+#' lopc <- ExecuteG1DBNS1(sim$data)
+#' dbn_score_lopc <- ExhaustiveSearchForBestParents(sim$data, type = "Score_LOPC", gamma = 0.1, score_mat = lopc$S1ls)
 
 
 ExhaustiveSearchForBestParents <- function(data, type = "Score_BIC", gamma = 0.0, score_mat = NULL)
@@ -448,7 +456,7 @@ ConstructBNUsingMaxScoringParents <- function(BICandWeight,  all_parent_combinat
     print(parents)
     if(!is.na(parents))
     {
-      print(length(parents))
+      #print(length(parents))
 
       for (par in parents)
       {
@@ -578,9 +586,13 @@ ImputeData <-function(data)
 #' @param validated_set data.frame with two columns, "from" and "to" consisting of pairs of nodes present in the "true" network.
 #' @return Number and percentage of TP arcs present in the learned network
 #' @example
-#' GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data, score_mat = NULL, maxP = Inf, gamma = 0.0,score = "Score_BIC", pred_pos = pred_pos_35)
+#'
+#' yeast_data_imputed <- imputeTS::na_interpolation(yeast_data)
+#' GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data_imputed,
+#' score_mat = NULL, maxP = 1, gamma = 0.0,score = "BIC", pred_pos = pred_pos_35)
 #' Score_BIC_arcs <- MakeArcSet(GS_Score_BIC, yeast_data)
-#' results <- PercentageValidatedFromRecovered(Score_BIC_arcs, yeast_data)
+#' results <- PercentageValidatedFromRecovered(Score_BIC_arcs,
+#' yeasts_arcs_validated)
 #' @export
 PercentageValidatedFromRecovered <- function(arc_set, validated_set)
 {
@@ -618,7 +630,7 @@ GetAMAT <- function(mat)
 #' This function is used to compute the results for a simulation study. It computes individual precision, recall, hamming distance and balanced accuracy
 #' of each learned DBN structure and then calculates the mean and sd of all the individual results.
 #' @param DBNList a list of learned DBN structures
-#' @param datasets a list of datasets simulated using the SimulateData() function. It holds the true DBN network structure (Adjaceny matrix)
+#' @param datasets a list of datasets simulated using the \code{SimulateData()} function. It holds the true DBN network structure (Adjaceny matrix)
 #' @return a list of different parameters:"precision_mean","precision_sd","recall_mean", "recall_sd",
 #' "hamming_mean", "hamming_sd", "TN_mean", "TN_sd","FN_mean" , "FN_sd", "FP_mean", "FP_sd", "TP_mean",
 #' "TP_sd", "Accuracy" , "Accuracy_sd".

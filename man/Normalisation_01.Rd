@@ -2,16 +2,16 @@
 % Please edit documentation in R/functions.R
 \name{Normalisation_01}
 \alias{Normalisation_01}
-\title{Normalise the data values between 0-1.}
+\title{Normalise the data values between 0 and 1.}
 \usage{
 Normalisation_01(x)
 }
 \arguments{
-\item{x}{a vector or a matrix of unscaled values}
+\item{x}{vector or a matrix of unscaled values}
 }
 \value{
 a vector or a matrix with values normalized within 0-1 range
 }
 \description{
-Normalise the data values between 0-1.
+Normalise the data values between 0 and 1.
 }

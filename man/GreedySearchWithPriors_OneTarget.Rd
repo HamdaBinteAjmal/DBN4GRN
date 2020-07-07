@@ -4,8 +4,8 @@
 \alias{GreedySearchWithPriors_OneTarget}
 \title{Internal function
 Applied greedy hill-climbing search to each local target node in the netork
-E_ij = log(score_mat + gamma)
-¬E_ij =  log(1-score_mat+gamma}
+\eqn{E_ij = log(score_mat + gamma)}
+ \eqn{¬E_ij =  log(1-score_mat+gamma)}}
 \usage{
 GreedySearchWithPriors_OneTarget(
   score_mat,
@@ -23,7 +23,7 @@ set of parents arcs for each local target node
 \description{
 Internal function
 Applied greedy hill-climbing search to each local target node in the netork
-E_ij = log(score_mat + gamma)
-¬E_ij =  log(1-score_mat+gamma
+\eqn{E_ij = log(score_mat + gamma)}
+ \eqn{¬E_ij =  log(1-score_mat+gamma)}
 }
 \keyword{internal}
