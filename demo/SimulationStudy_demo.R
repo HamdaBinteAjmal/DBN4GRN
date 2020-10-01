@@ -15,7 +15,7 @@
 
 library(DBN4GRN)
 ## DATA GENERATION ##
-sim_num <- 1 #Change this number to the desired number of simulations
+sim_num <- 100 #Change this number to the desired number of simulations
 seeds <- 1:sim_num
 datasets <- lapply(seeds, function(x) SimulateData(genes = 50, timepoints = 20, seed = x, prop = 0.05))
 
@@ -83,12 +83,15 @@ results = CalculatePrecisionAndRecallForMultiple(BNs_BIC_greedy_3, datasets)
 print(results)
 
 
+
 ### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LOPC, gamma = 0.6
 #LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
-
 BNs_Score_LOPC_greedy_3 <- mapply(function(dataset, lopc) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LOPC", maxP = 3, gamma = 0.6, score_mat = lopc$S1ls ), datasets, LOPCs, SIMPLIFY = FALSE)
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_greedy_3, datasets)
 print(results)
+
+
+
 ### Greedy hill-climbing search, max number of parents set to Inf. Score = Score_LOPC, gamma = 0.6
 #LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
 
@@ -97,13 +100,18 @@ results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_greedy, datasets
 print(results)
 
 
+
 ### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LASSO, gamma = 0.6
 BNs_Score_LASSO_greedy_3 <- mapply(function(dataset, lasso) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LASSO", maxP = 3, gamma = 0.6, score_mat = lasso ), datasets, LASSOs, SIMPLIFY = FALSE)
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LASSO_greedy_3, datasets)
 print(results)
 
 
+
+
+
 ### Greedy hill-climbing search, no limit on max number of parents. Score = Score_LASSO, gamma = 0.6
 BNs_Score_LASSO_greedy <- mapply(function(dataset, lasso) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_Lasso", maxP = Inf, gamma = 0.6, score_mat = lasso ), datasets, LASSOs, SIMPLIFY = FALSE)
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LASSO_greedy, datasets)
 print(results)
+

@@ -164,11 +164,13 @@ Normalisation_01<- function(x)
 
 GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, gamma = 0, pred_pos = NULL, score = "Score_BIC")
 {
+
   p <- ncol(data)
   n <- nrow(data)
   dataS <- ShiftData(data)
   if(is.null(score_mat))
   {
+    #break()
     score_mat <- matrix(0,p,p)
   }
 
@@ -211,8 +213,8 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
 
   fullBN <- do.call(what = rbind, args = local_bns_arcs)
   nodes <- names(dataS)
-  bn<- bnlearn::empty.graph(nodes)
-  arcs(bn) <- fullBN
+  bn <- bnlearn::empty.graph(nodes)
+  bnlearn::arcs(bn) <- fullBN
 
   return (bn)
 
@@ -229,10 +231,10 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
 {
   keep_adding = 1
   targetNode <- paste0("V", targetIdx , "_1")
- # all_parents_names <- paste0("V", all_parents)
+  # all_parents_names <- paste0("V", all_parents)
   all_parents_names <- all_parents
   nodes <- c(all_parents_names, targetNode)
- # print(nodes)
+  # print(nodes)
   print(paste0("Currently finding parents for: ", targetNode))
   data_subset <- dataS[,nodes]
 
@@ -244,7 +246,7 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
 
   else if(tolower(score) == "score_lopc")
   {
-  #  print("LOPC")
+    #  print("LOPC")
     weights_absent <- log(score_mat + gamma)
     weights_present <- log(1 - score_mat+gamma)
   }
@@ -265,51 +267,84 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
   empty_g1dbn <- sum(weight_vector_absent)
   old_bic <- old_bic+empty_g1dbn
   TotalParents <- 0
-  while (keep_adding > 0 && TotalParents < maxP)
+  print(paste0("old: ", old_bic))
+  iterations <- 0
+  while (keep_adding > 0 )#&& TotalParents < maxP)
   {
-
-    new_bics <- unlist(lapply(all_parents, function(x)
+    parents <- bnlearn::parents(x = bn, node = targetNode)
+    absents <- all_parents_names[which(!all_parents_names %in% parents)]
+    new_bics <- unlist(lapply(all_parents_names, function(x)
     {
 
-      if(!is.na(x))
+
+      if(x %in% absents)
       {
+        if(TotalParents < maxP)
+        {
+          bn_1 <- bnlearn::set.arc(bn, from = x, to = targetNode)
+        }
+        else
+        {
+          bn_1 <- bn
+        }
 
-        bn_1 <- bnlearn::set.arc(bn, from = x, to = targetNode)
-        score <- bnlearn::score(x  = bn_1, data = data_subset, type = "bic-g", by.node = TRUE )[targetNode]
-
-        weights_present <- weight_vector_present[x]
-        weights_absent <- sum(weight_vector_absent[which(names(weight_vector_absent) != x)])
       }
       else
       {
-        score <- NA
+        bn_1 <- bnlearn::drop.arc(bn, from = x, to = targetNode)
+
       }
 
-
+      score <- bnlearn::score(x  = bn_1, data = data_subset, type = "bic-g", by.node = TRUE )[targetNode]
+      current_parents <- bnlearn::parents(x = bn_1, node = targetNode)
+      current_absents <- all_parents_names[which(!all_parents_names %in% current_parents)]
+      weights_present <- sum(weight_vector_present[current_parents])
+      weights_absent <- sum(weight_vector_absent[current_absents])
+      if(score == -Inf)
+      {
+        print("ALERT -Inf ")
+        # break()
+      }
+      print(paste0("BIC = ", score, "Presents: ", weights_present, "Absents: ", weights_absent))
       sum(score, weights_present, weights_absent)
+
+
     }))
 
 
     bic_and_weight <- new_bics #+ weight_vector
-  # print(sum(new_bics))
+    # print(sum(new_bics))
     difference <- bic_and_weight - old_bic
+    #print(difference)
     diff <- 0
     keep_adding <- length(which(difference > diff)) > 0
 
     if(keep_adding)
     {
-    #  print(difference)
+
+      #   print(difference)
       max_idx <- which.max(difference)
-      best_parent <- all_parents_names[max_idx]
-      bn <- bnlearn::set.arc(bn, from = best_parent, to = targetNode)
-      TotalParents <- TotalParents + 1
-      print(paste0("Adding Parent: ", best_parent ))
-      all_parents[max_idx] <- NA
+      if(all_parents[max_idx] %in% absents)
+      {
+        best_parent <- all_parents_names[max_idx]
+        bn <- bnlearn::set.arc(bn, from = best_parent, to = targetNode)
+        #TotalParents <- TotalParents + 1
+        print(paste0("Adding Parent: ", best_parent ))
+      }
+      else
+      {
+        worst_parent <- all_parents_names[max_idx]
+        bn <- bnlearn::drop.arc(bn, from = worst_parent, to = targetNode)
+        #TotalParents <- TotalParents - 1
+        print(paste0("Removing Parent: ", worst_parent ))
+      }
+      TotalParents <- nrow(bnlearn::arcs(bn))
+      #all_parents[max_idx] <- NA
       old_bic <- bic_and_weight[max_idx]
     }
 
-  }
 
+  }
   return (bnlearn::arcs(bn))
 
 }
@@ -577,7 +612,8 @@ CombineBICandPriors <- function(bic_scores, priors)
 #' @return data.frame with missing values imputed with linear interpolation
 ImputeData <-function(data)
 {
-  imp <- imputeTS::na_interpolation(data, option = "linear")
+ # imp <- imputeTS::na_interpolation(data, option = "linear")
+  imp <- imputeTS::na.locf(data)
   return (as.data.frame(imp))
 }
 
@@ -639,7 +675,7 @@ GetAMAT <- function(mat)
 #' @export
 CalculatePrecisionAndRecallForMultiple <- function(DBNList, datasets)
 {
-  dbns <- lapply(DBNList, function(x) GetAMAT(amat(x)))
+  dbns <- lapply(DBNList, function(x) GetAMAT(bnlearn::amat(x)))
   reals <- lapply(datasets, function(x) t(x$RealNet$AdjMatrix))
   realdbns <- lapply(datasets, function (x) ConvertToBN(x$RealNet))
   confs_mats <- mapply(function(dbn, real)
