@@ -267,7 +267,7 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
   empty_g1dbn <- sum(weight_vector_absent)
   old_bic <- old_bic+empty_g1dbn
   TotalParents <- 0
-  print(paste0("old: ", old_bic))
+#  print(paste0("old: ", old_bic))
   iterations <- 0
   while (keep_adding > 0 )#&& TotalParents < maxP)
   {
@@ -305,7 +305,7 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
         print("ALERT -Inf ")
         # break()
       }
-      print(paste0("BIC = ", score, "Presents: ", weights_present, "Absents: ", weights_absent))
+    #  print(paste0("BIC = ", score, "Presents: ", weights_present, "Absents: ", weights_absent))
       sum(score, weights_present, weights_absent)
 
 
