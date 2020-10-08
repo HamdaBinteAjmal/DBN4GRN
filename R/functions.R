@@ -613,7 +613,7 @@ CombineBICandPriors <- function(bic_scores, priors)
 ImputeData <-function(data)
 {
  # imp <- imputeTS::na_interpolation(data, option = "linear")
-  imp <- imputeTS::na.locf(data)
+  imp <- imputeTS::na_locf(data)
   return (as.data.frame(imp))
 }
 
