@@ -10,7 +10,7 @@ Author: Hamda Ajmal [aut, cre],
   Michael Madden [aut]
 Maintainer: Hamda Ajmal <h.ajmal1@nuigalway.ie>
 Description: Learn the structure of dynamic Bayesian networks from time series data using different scoring objectives, the BIC score, Score_Lasso and Score_LOPC with exhaustive search and greedy hill climbing search to maximise the scoring objective. It can also be used with any user defined scoring objective.
-License:GPL (>= 2)
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: 

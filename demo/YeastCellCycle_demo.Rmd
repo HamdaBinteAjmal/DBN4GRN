@@ -16,6 +16,7 @@ variant: markdown_github
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
 library(DBN4GRN)
+library(plyr)
 ```
 
 ## Learning sparse DBN structures from Yeast Cell Cycle gene expression data.
@@ -49,7 +50,12 @@ GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_m
 Score_BIC_arcs <- MakeArcSet(GS_Score_BIC, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_BIC_arcs, yeasts_arcs_validated)
-xlsx::write.xlsx(Score_BIC_arcs, file = "GreedySearch_BIC.xlsx", col.names = TRUE, row.names = FALSE)
+idx_match <- with(join.keys(Score_BIC_arcs, yeasts_arcs_validated), which(x %in% y))
+Validated <- array(data = NA, dim = nrow(Score_BIC_arcs))
+Validated[idx_match] <- TRUE
+Score_BIC_arcs <- cbind(Score_BIC_arcs, Validated)
+xlsx::write.xlsx(Score_BIC_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "BIC Score", showNA = FALSE)
+
 
 
 ```
@@ -67,13 +73,17 @@ GS_Score_LOPC_0p0 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, sc
 Score_LOPC_0p0_arcs <- MakeArcSet(GS_Score_LOPC_0p0, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LOPC_0p0_arcs, yeasts_arcs_validated)
+idx_match <- with(join.keys(Score_LOPC_0p0_arcs, yeasts_arcs_validated), which(x %in% y))
+Validated <- array(data = NA, dim = nrow(Score_LOPC_0p0_arcs))
+Validated[idx_match] <- TRUE
+Score_LOPC_0p0_arcs <- cbind(Score_LOPC_0p0_arcs, Validated)
+xlsx::write.xlsx(Score_LOPC_0p0_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "Score_LOPC-gamma = 0.0", append = TRUE, showNA = FALSE)
 
 ```
 
 ```{r res2 }
 print(paste0("Percentage of validated arcs = ", results[2]))
 print(paste0("Total number of arcs = ", nrow(Score_LOPC_0p0_arcs) ))
-xlsx::write.xlsx(Score_BIC_arcs, file = "GreedySearch_LOPC.xlsx", col.names = TRUE, row.names = FALSE)
 
 ```
 
@@ -85,7 +95,12 @@ GS_Score_LOPC_0p2 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, sc
 Score_LOPC_0p2_arcs <- MakeArcSet(GS_Score_LOPC_0p2, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LOPC_0p2_arcs, yeasts_arcs_validated)
-xlsx::write.xlsx(Score_LOPC_0p2_arcs, file = "GreedySearch_LOPC_0p2.xlsx", col.names = TRUE, row.names = FALSE)
+idx_match <- with(join.keys(Score_LOPC_0p2_arcs, yeasts_arcs_validated), which(x %in% y))
+Validated <- array(data = NA, dim = nrow(Score_LOPC_0p2_arcs))
+Validated[idx_match] <- TRUE
+Score_LOPC_0p2_arcs <- cbind(Score_LOPC_0p2_arcs, Validated)
+xlsx::write.xlsx(Score_LOPC_0p2_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "Score_LOPC-gamma = 0.2", append = TRUE, showNA = FALSE)
+
 
 ```
 
@@ -101,7 +116,11 @@ LASSO  = ApplyLasso(yeast_data_imputed, pred_pos = pred_pos_35)
 GS_Score_LASSO_0p0 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LASSO, maxP = Inf, gamma = 0.0,score = "Score_LASSO", pred_pos = pred_pos_35)
 Score_LASSO_0p0_arcs <- MakeArcSet(GS_Score_LASSO_0p0, yeast_data_imputed)
 results <- PercentageValidatedFromRecovered(Score_LASSO_0p0_arcs, yeasts_arcs_validated)
-xlsx::write.xlsx(Score_LASSO_0p0_arcs, file = "GreedySearch_LASSO.xlsx", col.names = TRUE, row.names = FALSE)
+idx_match <- with(join.keys(Score_LASSO_0p0_arcs, yeasts_arcs_validated), which(x %in% y))
+Validated <- array(data = NA, dim = nrow(Score_LASSO_0p0_arcs))
+Validated[idx_match] <- TRUE
+Score_LASSO_0p0_arcs <- cbind(Score_LASSO_0p0_arcs, Validated)
+xlsx::write.xlsx(Score_LASSO_0p0_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "Score_LASSO-gamma = 0.0", append = TRUE, showNA = FALSE)
 
 ```
 
@@ -119,7 +138,11 @@ GS_Score_LASSO_0p2 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, s
 Score_LASSO_0p2_arcs <- MakeArcSet(GS_Score_LASSO_0p2, yeast_data_imputed)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LASSO_0p2_arcs, yeasts_arcs_validated)
-xlsx::write.xlsx(Score_LASSO_0p2_arcs, file = "GreedySearch_LASSO_0p2.xlsx", col.names = TRUE, row.names = FALSE)
+idx_match <- with(join.keys(Score_LASSO_0p2_arcs, yeasts_arcs_validated), which(x %in% y))
+Validated <- array(data = NA, dim = nrow(Score_LASSO_0p2_arcs))
+Validated[idx_match] <- TRUE
+Score_LASSO_0p2_arcs <- cbind(Score_LASSO_0p2_arcs, Validated)
+xlsx::write.xlsx(Score_LASSO_0p2_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "Score_LASSO-gamma = 0.2", append = TRUE, showNA = FALSE)
 
 
 ```
