@@ -86,6 +86,8 @@ print(results)
 
 ### Greedy hill-climbing search, max number of parents set to 3. Score = Score_LOPC, gamma = 0.6
 #LOPCs <- lapply(datasets, function(dataset) ExecuteG1DBNS1(dataset$data))
+load("G1s.rds")
+LOPCs <- G1s
 BNs_Score_LOPC_greedy_3 <- mapply(function(dataset, lopc) GreedySearchParentsWithPriors(data = dataset$data, score = "Score_LOPC", maxP = 3, gamma = 0.6, score_mat = lopc$S1ls ), datasets, LOPCs, SIMPLIFY = FALSE)
 results = CalculatePrecisionAndRecallForMultiple(BNs_Score_LOPC_greedy_3, datasets)
 print(results)
