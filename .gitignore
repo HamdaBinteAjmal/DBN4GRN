@@ -5,4 +5,6 @@
 rds/
 ForGhanshyam.R
 temp_test.R
-
+*.soft
+*.xlsx
+demo/Yeast_Analysis_Scors.xlsx

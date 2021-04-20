@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+.GNW_test.R
+One_pert_GNW.R
+gnw_test_limited.R
+ExtractSubnets.R

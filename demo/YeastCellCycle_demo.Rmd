@@ -47,7 +47,7 @@ To learn a structure of a DBN using the BIC score, we use the following code.
 ```{r BIC, message = FALSE ,warning = FALSE , results='hide'}
 GS_Score_BIC <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = NULL, maxP = Inf, gamma = 0.0,score = "BIC", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
-Score_BIC_arcs <- MakeArcSet(GS_Score_BIC, yeast_data)
+Score_BIC_arcs <- MakeArcSet_realnames(GS_Score_BIC, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_BIC_arcs, yeasts_arcs_validated)
 idx_match <- with(join.keys(Score_BIC_arcs, yeasts_arcs_validated), which(x %in% y))
@@ -70,7 +70,7 @@ To learn a DBN from yeast data using $Score_{LOPC}$ with $\gamma = 0.0$, we use 
 LOPC  = ExecuteG1DBNS1(yeast_data_imputed, predPosition = pred_pos_35)
 GS_Score_LOPC_0p0 <- GreedySearchParentsWithPriors(data = yeast_data_imputed, score_mat = LOPC$S1ls, maxP = Inf, gamma = 0.0,score = "Score_LOPC", pred_pos = pred_pos_35)
 #Get a list of pair of connected nodes in the network
-Score_LOPC_0p0_arcs <- MakeArcSet(GS_Score_LOPC_0p0, yeast_data)
+Score_LOPC_0p0_arcs <- MakeArcSet_realnames(GS_Score_LOPC_0p0, yeast_data)
 # To calculate the percentages of arcs learned in the DBN, we use the following function
 results <- PercentageValidatedFromRecovered(Score_LOPC_0p0_arcs, yeasts_arcs_validated)
 idx_match <- with(join.keys(Score_LOPC_0p0_arcs, yeasts_arcs_validated), which(x %in% y))

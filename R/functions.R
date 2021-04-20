@@ -48,9 +48,37 @@ SimulateData <- function(genes, timepoints, seed = 1, prop = 0.05, range = c(-0.
   ## initializing the process Xt
   X0 <- B +  runif(p,errors[1], errors[2])
   Xn <- G1DBN::SimulGeneExpressionAR1(MyNet$A,B,X0,sigmaEps,n)
-
+  colnames(Xn) <- paste0("V", 1:ncol(Xn))
   ml = list("data" = Xn, "RealNet"  = MyNet)
   return (ml)
+}
+#' Puts the data in a time frame with values of variables in the current time slice and their immediate prior value from the previous time slice.
+#' @param data a data.frame, columns represent the variables and rows represent the temporal data
+#' @return a data.frame with twice the number of columns.
+#' @keywords internal
+
+ShiftData_delta <- function(data)
+{
+
+  n = nrow(data)
+  p = ncol(data)
+  data2 = as.data.frame(matrix(NA, ncol = 2*p, nrow = n-1))
+  data2[1:(n-1), 1:p] = data[1:(n-1),]
+
+  new_names = vector(length = p)
+  if(is.null(colnames(data)))
+  {
+    colnames(data) = paste0("V", 1:p)
+  }
+  for(i in 1:ncol(data))
+  {
+    new_names[i] = paste0(colnames(data)[i] , "_1")
+
+
+    data2[,i+ncol(data)] = data[1:(n-1), i] - data[2:n, i]
+  }
+  colnames(data2) =  c(colnames(data), new_names)
+  data2
 }
 
 #' Puts the data in a time frame with values of variables in the current time slice and their immediate prior value from the previous time slice.
@@ -65,9 +93,13 @@ ShiftData <- function(data)
   p = ncol(data)
   data2 = as.data.frame(matrix(NA, ncol = 2*p, nrow = n-1))
   data2[1:n-1, 1:p] = data[1:n-1,]
+
   new_names = vector(length = p)
-  colnames(data) = paste0("V", 1:p)
-  for(i in 1:ncol(data))
+  if(is.null(colnames(data)))
+  {
+    colnames(data) = paste0("V", 1:p)
+  }
+   for(i in 1:ncol(data))
   {
     new_names[i] = paste0(colnames(data)[i] , "_1")
 
@@ -167,11 +199,20 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
 
   p <- ncol(data)
   n <- nrow(data)
+
   dataS <- ShiftData(data)
-  if(is.null(score_mat))
+
+   if(is.null(score_mat))
   {
-    #break()
-    score_mat <- matrix(0,p,p)
+     if(is.null(pred_pos))
+     {
+        score_mat <- matrix(0,p,p)
+     }
+     else
+     {
+       score_mat <- matrix(0,p,length(pred_pos))
+
+     }
   }
 
   if(is.null(pred_pos))
@@ -182,9 +223,9 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
   else
   {
     all_parents = names(dataS)[pred_pos]
-  }
 
-  ## Check score arg ##
+  }
+   ## Check score arg ##
 
   if(tolower(score) == "score_lasso")
   {
@@ -205,8 +246,10 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
   {
     stop("In valid score argument. Possible inputs are 'Score_LASSO', 'BIC' or 'Score_LOPC'")
   }
-  targets <- 1:p
 
+  targets <- names(dataS)[(p+1):(2*p)]
+ colnames(score_mat) <- all_parents #names(dataS)[1:p]
+rownames(score_mat) <- targets
   local_bns_arcs <- lapply(targets, function(x)
 
     GreedySearchWithPriors_OneTarget(score_mat = score_mat, targetIdx = x, all_parents = all_parents, dataS = dataS, maxP = maxP,  gamma = gamma, score = score))
@@ -220,6 +263,8 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
 
 
 }
+
+
 #' Internal function
 #' Applied greedy hill-climbing search to each local target node in the netork
 #' \eqn{E_ij = log(score_mat + gamma)}
@@ -227,14 +272,12 @@ GreedySearchParentsWithPriors <- function(data,  score_mat = NULL, maxP = Inf, g
 #' @return set of parents arcs for each local target node
 #' @keywords internal
 #' @import bnlearn
-GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, dataS, maxP = maxP, gamma, score)
+GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, dataS, maxP = maxP, gamma, score, real.names = FALSE)
 {
   keep_adding = 1
-  targetNode <- paste0("V", targetIdx , "_1")
-  # all_parents_names <- paste0("V", all_parents)
+    targetNode <-targetIdx# paste0(targetIdx , "_1")
   all_parents_names <- all_parents
   nodes <- c(all_parents_names, targetNode)
-  # print(nodes)
   print(paste0("Currently finding parents for: ", targetNode))
   data_subset <- dataS[,nodes]
 
@@ -256,7 +299,6 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
     weights_absent = score_mat * 0
     weights_present = score_mat * 0
   }
-
   weight_vector_absent <-  weights_absent[targetIdx, ]
   weight_vector_present <- weights_present[targetIdx,]
   names(weight_vector_absent) <- all_parents_names
@@ -265,14 +307,14 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
 
   old_bic <-  bnlearn::score(x  =bn, data = data_subset, type = "bic-g",by.node = TRUE )[targetNode]
   empty_g1dbn <- sum(weight_vector_absent)
-  old_bic <- old_bic+empty_g1dbn
+  old_bic <- old_bic + empty_g1dbn
   TotalParents <- 0
-#  print(paste0("old: ", old_bic))
   iterations <- 0
-  while (keep_adding > 0 )#&& TotalParents < maxP)
+  while (keep_adding > 0 )
   {
     parents <- bnlearn::parents(x = bn, node = targetNode)
-    absents <- all_parents_names[which(!all_parents_names %in% parents)]
+    absents <- all_parents_names[which(!
+                                         all_parents_names %in% parents)]
     new_bics <- unlist(lapply(all_parents_names, function(x)
     {
 
@@ -303,44 +345,36 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
       if(score == -Inf)
       {
         print("ALERT -Inf ")
-        # break()
       }
-    #  print(paste0("BIC = ", score, "Presents: ", weights_present, "Absents: ", weights_absent))
-      sum(score, weights_present, weights_absent)
+        sum(score, weights_present, weights_absent)
 
 
     }))
 
 
-    bic_and_weight <- new_bics #+ weight_vector
-    # print(sum(new_bics))
-    difference <- bic_and_weight - old_bic
-    #print(difference)
-    diff <- 0
+    bic_and_weight <- new_bics
+   difference <- bic_and_weight - old_bic
+      diff <- 0
     keep_adding <- length(which(difference > diff)) > 0
 
     if(keep_adding)
     {
 
-      #   print(difference)
       max_idx <- which.max(difference)
       if(all_parents[max_idx] %in% absents)
       {
         best_parent <- all_parents_names[max_idx]
         bn <- bnlearn::set.arc(bn, from = best_parent, to = targetNode)
-        #TotalParents <- TotalParents + 1
         print(paste0("Adding Parent: ", best_parent ))
       }
       else
       {
         worst_parent <- all_parents_names[max_idx]
         bn <- bnlearn::drop.arc(bn, from = worst_parent, to = targetNode)
-        #TotalParents <- TotalParents - 1
         print(paste0("Removing Parent: ", worst_parent ))
       }
       TotalParents <- nrow(bnlearn::arcs(bn))
-      #all_parents[max_idx] <- NA
-      old_bic <- bic_and_weight[max_idx]
+       old_bic <- bic_and_weight[max_idx]
     }
 
 
@@ -368,14 +402,12 @@ GreedySearchWithPriors_OneTarget<- function(score_mat, targetIdx, all_parents, d
 MakeArcSet <- function(bn, data)
 {
   arc_set <- bnlearn::arcs(bn)
-  froms <- unlist(lapply(arc_set[,1], function(from) as.numeric(gsub("V", from, replacement = ""))))
+  froms <- arc_set[,1]
   tos <- unlist(lapply(arc_set[,2], function(to) {
 
-    to <- gsub("V", to, replacement = "")
-    to <- as.numeric(gsub("_1",to, replacement = "" ))}))
+    #   to <- gsub("V", to, replacement = "")
+    to <- gsub("_1",to, replacement = "" )}))
 
-  froms <- names(data)[froms]
-  tos <- names(data)[tos]
   arc_set <- as.data.frame(cbind("from" = froms, "to" = tos ))
   return(arc_set)
 
@@ -406,27 +438,21 @@ MakeArcSet <- function(bn, data)
 
 ExhaustiveSearchForBestParents <- function(data, type = "Score_BIC", gamma = 0.0, score_mat = NULL)
 {
-  #print(score_mat[1:4,1:4])
   p <- ncol(data)
   n <- nrow(data)
   dataS <- ShiftData(data)
   allNodes <- names(dataS)
   All_possible_parents <-  names(dataS)[1:p]
- # print(2)
   Allcombinations = MakeAllPossibleCombination(All_possible_parents)
   All_possible_targets = allNodes[grepl("_1", allNodes)]
-  #print(3)
   if(type == "Score_LOPC")
   {
-  #  G1_mat <- ExecuteG1DBNS1(data)
-  #  score_mat <- G1_mat$S1ls
-    priors <-  lapply(All_possible_targets, function(x) CalculatePriors(allNodes, x, Allcombinations, score_mat, gamma))
+      priors <-  lapply(All_possible_targets, function(x) CalculatePriors(allNodes, x, Allcombinations, score_mat, gamma))
     priors <- do.call(rbind,priors)
 
   }
   else if(type == "Score_LASSO")
   {
- #   lasso <- ApplyLars(data)
     lasso <- score_mat
     lasso <- Normalisation_01(lasso) #Normalise between 0 and 1
     lasso <- 1-lasso #Important to invert
@@ -436,7 +462,6 @@ ExhaustiveSearchForBestParents <- function(data, type = "Score_BIC", gamma = 0.0
   }
   else
   {
-    #set priors to zero, Only bic scores to be calculated
     priors <- matrix(data = 0, ncol = length(Allcombinations), nrow = length(All_possible_targets) )
     gamma <- 0
 
@@ -478,20 +503,17 @@ MakeAllPossibleCombination <- function(all_parents)
 ConstructBNUsingMaxScoringParents <- function(BICandWeight,  all_parent_combinations, allNodes)
 {
   max_ids <- apply(BICandWeight, 1, which.max)
-  #allNodes = names(dataS)
   All_possible_targets = allNodes[grepl("_1", allNodes)]
   max_parents <- lapply(max_ids, function(x) unlist(all_parent_combinations[x]))
   bn <- bnlearn::empty.graph(allNodes)
   for (i in 1:length(All_possible_targets))
 
   {
-    #print(i)
-    target <- All_possible_targets[[i]]
+      target <- All_possible_targets[[i]]
     parents <- max_parents[[i]]
     print(parents)
     if(!is.na(parents))
     {
-      #print(length(parents))
 
       for (par in parents)
       {
@@ -513,7 +535,6 @@ ScoreEntirepossibleSetsOfParents <- function(dataS, tarNode, all_combinations)
   print(tarNode)
   tarIndex = as.numeric(sub("_1", "", tarIndex))
   allScores <- array(data = NA, dim = length(all_combinations))
-  #  beta = beta[which(beta$to == tarNode),]
   allNodes = names(dataS)
   All_possible_parents = allNodes[!grepl("_1", allNodes)]
 
@@ -538,10 +559,6 @@ ScoreEntirepossibleSetsOfParents <- function(dataS, tarNode, all_combinations)
     }
 
     newScore = bnlearn::score(bn, dataS[,c(bnlearn::nodes(bn))], type = "bic-g", by.node = TRUE)[tarNode]
-    # if(newScore == -Inf)
-    #   print("!blah")
-    # else
-    #  print("not blah!")
 
     allScores[i] = newScore
 
@@ -638,13 +655,21 @@ PercentageValidatedFromRecovered <- function(arc_set, validated_set)
 }
 
 #' @keywords internal
-ConvertToBN <-function(MyNet)
+ConvertToBN <-function(MyNet, names = NULL)
 {
+  print(names)
   adjMat = MyNet$AdjMatrix
   p = ncol(adjMat)
   newAdjMat = matrix(0, p*2,p*2)
+  if(is.null(names))
+  {
   names = paste0("V", 1:p)
   names = c(names, paste0(names,"_1"))
+  }
+  else
+  {
+     names = c(names, paste0(names, "_1" ))
+  }
   colnames(newAdjMat) = names
   rownames(newAdjMat) =  colnames(newAdjMat)
   newAdjMat[1:p, 1:p+p] = t(MyNet$AdjMatrix)
@@ -677,7 +702,7 @@ CalculatePrecisionAndRecallForMultiple <- function(DBNList, datasets)
 {
   dbns <- lapply(DBNList, function(x) GetAMAT(bnlearn::amat(x)))
   reals <- lapply(datasets, function(x) t(x$RealNet$AdjMatrix))
-  realdbns <- lapply(datasets, function (x) ConvertToBN(x$RealNet))
+  realdbns <- lapply(datasets, function (x) ConvertToBN(x$RealNet,names(x$data)))
   confs_mats <- mapply(function(dbn, real)
   {
     confusionMatrix( reference = factor(real), data = factor(dbn), positive = "1")
@@ -720,3 +745,6 @@ CalculatePrecisionAndRecallForMultiple <- function(DBNList, datasets)
 
 
 }
+
+
+

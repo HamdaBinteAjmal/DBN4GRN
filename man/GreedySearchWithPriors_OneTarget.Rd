@@ -14,7 +14,8 @@ GreedySearchWithPriors_OneTarget(
   dataS,
   maxP = maxP,
   gamma,
-  score
+  score,
+  real.names = FALSE
 )
 }
 \value{
