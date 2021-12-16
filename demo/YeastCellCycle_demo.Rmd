@@ -42,6 +42,10 @@ potential_parents <- c("ACE2","ASH1","CHA4","FKH1","FKH2","GAT3","GCR1","HCM1","
 
 pred_pos_35 <- which(names(yeast_data) %in% potential_parents)
 
+yeasts_arcs_validated_subset <- yeasts_arcs_validated[which(yeasts_arcs_validated$from %in% colnames(yeast_data_imputed)),]
+
+yeasts_arcs_validated_subset <- yeasts_arcs_validated_subset[which(yeasts_arcs_validated_subset$to %in% colnames(yeast_data_imputed)),]
+
 ```
 To learn a structure of a DBN using the BIC score, we use the following code.
 ```{r BIC, message = FALSE ,warning = FALSE , results='hide'}
@@ -56,7 +60,7 @@ Validated[idx_match] <- TRUE
 Score_BIC_arcs <- cbind(Score_BIC_arcs, Validated)
 xlsx::write.xlsx(Score_BIC_arcs, file = "Yeast_Analysis_Scors.xlsx", col.names = TRUE, row.names = FALSE, sheetName = "BIC Score", showNA = FALSE)
 
-
+FalseNegatives = 
 
 ```
 
